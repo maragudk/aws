@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/maragudk/env"
 
+	"github.com/maragudk/aws/awstest"
 	"github.com/maragudk/aws/s3"
 )
 
@@ -22,7 +22,7 @@ func CreateBucket(t *testing.T) *s3.Bucket {
 	env.MustLoad("../.env-test")
 
 	b := s3.NewBucket(s3.NewBucketOptions{
-		Config:    getAWSConfig(t),
+		Config:    awstest.GetAWSConfig(t),
 		Name:      defaultBucket,
 		PathStyle: true,
 	})
@@ -68,32 +68,5 @@ func cleanupBucket(t *testing.T, client *awss3.Client, bucket string) {
 func SkipIfShort(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
-	}
-}
-
-func getAWSConfig(t *testing.T) aws.Config {
-	awsConfig, err := config.LoadDefaultConfig(context.Background(),
-		config.WithEndpointResolverWithOptions(createAWSEndpointResolver(t)),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return awsConfig
-}
-
-func createAWSEndpointResolver(t *testing.T) aws.EndpointResolverWithOptionsFunc {
-	s3EndpointURL := env.GetStringOrDefault("S3_ENDPOINT_URL", "")
-	if s3EndpointURL == "" {
-		t.Fatal("s3 endpoint URL must be set in testing with env var S3_ENDPOINT_URL")
-	}
-
-	return func(service, region string, options ...any) (aws.Endpoint, error) {
-		switch service {
-		case awss3.ServiceID:
-			return aws.Endpoint{
-				URL: s3EndpointURL,
-			}, nil
-		}
-		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
 	}
 }

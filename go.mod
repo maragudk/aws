@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.18.1
 	github.com/aws/aws-sdk-go-v2/config v1.18.26
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.34.0
+	github.com/aws/aws-sdk-go-v2/service/sqs v1.23.1
 	github.com/maragudk/env v0.1.2
 	github.com/maragudk/is v0.1.0
 )
