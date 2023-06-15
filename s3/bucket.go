@@ -19,7 +19,6 @@ type NewBucketOptions struct {
 	PathStyle bool
 }
 
-// NewBucket with the given options.
 func NewBucket(opts NewBucketOptions) *Bucket {
 	client := s3.NewFromConfig(opts.Config, func(o *s3.Options) {
 		o.UsePathStyle = opts.PathStyle
