@@ -3,7 +3,6 @@ package s3
 import (
 	"context"
 	"io"
-	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -11,31 +10,23 @@ import (
 
 type Bucket struct {
 	Client *s3.Client
-	log    *log.Logger
 	name   string
 }
 
 type NewBucketOptions struct {
 	Config    aws.Config
-	Log       *log.Logger
 	Name      string
 	PathStyle bool
 }
 
 // NewBucket with the given options.
-// If no logger is provided, logs are discarded.
 func NewBucket(opts NewBucketOptions) *Bucket {
-	if opts.Log == nil {
-		opts.Log = log.New(io.Discard, "", 0)
-	}
-
 	client := s3.NewFromConfig(opts.Config, func(o *s3.Options) {
 		o.UsePathStyle = opts.PathStyle
 	})
 
 	return &Bucket{
 		Client: client,
-		log:    opts.Log,
 		name:   opts.Name,
 	}
 }
