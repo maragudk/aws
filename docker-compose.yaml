@@ -8,3 +8,7 @@ services:
     ports:
       - "9002:9000"
     command: server /data
+  elasticmq-test:
+    image: "softwaremill/elasticmq-native:1.2.3"
+    ports:
+      - "9326:9324"
