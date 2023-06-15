@@ -32,5 +32,8 @@ func TestBucket(t *testing.T) {
 		body, err = b.Get(context.Background(), "test")
 		is.NotError(t, err)
 		is.True(t, body == nil)
+
+		err = b.Delete(context.Background(), "test")
+		is.NotError(t, err)
 	})
 }
