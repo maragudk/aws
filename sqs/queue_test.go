@@ -36,15 +36,15 @@ func TestQueue(t *testing.T) {
 	})
 
 	t.Run("receive does not return an error if the context is already cancelled", func(t *testing.T) {
-		queue := sqstest.CreateQueue(t)
+		q := sqstest.CreateQueue(t)
 
 		// Send first, to get the queue URL when the context is not cancelled
-		err := queue.Send(context.Background(), sqs.Message{})
+		err := q.Send(context.Background(), sqs.Message{})
 		is.NotError(t, err)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		m, _, err := queue.Receive(ctx)
+		m, _, err := q.Receive(ctx)
 		is.NotError(t, err)
 		is.Nil(t, m)
 	})
