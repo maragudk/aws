@@ -11,7 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
 
-type Message = map[string]any
+type Message struct {
+	Body          Body
+	ReceiptHandle string
+}
+
+type Body = map[string]string
 
 type Queue struct {
 	Client   *sqs.Client
@@ -43,30 +48,30 @@ func NewQueue(opts NewQueueOptions) *Queue {
 	}
 }
 
-// Send a message as JSON.
-func (q *Queue) Send(ctx context.Context, m Message) error {
+// Send a message body as JSON.
+func (q *Queue) Send(ctx context.Context, b Body) error {
 	if err := q.ensureQueueURL(ctx); err != nil {
 		return err
 	}
 
-	messageAsBytes, err := json.Marshal(m)
+	bodyBytes, err := json.Marshal(b)
 	if err != nil {
 		return err
 	}
-	messageAsString := string(messageAsBytes)
+	bodyString := string(bodyBytes)
 
 	_, err = q.Client.SendMessage(ctx, &sqs.SendMessageInput{
-		MessageBody: &messageAsString,
+		MessageBody: &bodyString,
 		QueueUrl:    q.url,
 	})
 
 	return err
 }
 
-// Receive a message and its receipt ID. Returns nil if no message is available.
-func (q *Queue) Receive(ctx context.Context) (*Message, string, error) {
+// Receive a Message. Returns nil if no message is available.
+func (q *Queue) Receive(ctx context.Context) (*Message, error) {
 	if err := q.ensureQueueURL(ctx); err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	output, err := q.Client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
@@ -75,32 +80,39 @@ func (q *Queue) Receive(ctx context.Context) (*Message, string, error) {
 	})
 	if err != nil {
 		if strings.Contains(err.Error(), "context canceled") {
-			return nil, "", nil
+			return nil, nil
 		}
-		return nil, "", err
+		return nil, err
 	}
 
 	if len(output.Messages) == 0 {
-		return nil, "", nil
+		return nil, nil
 	}
 
 	var m Message
-	if err := json.Unmarshal([]byte(*output.Messages[0].Body), &m); err != nil {
-		return nil, "", err
+	if err := json.Unmarshal([]byte(*output.Messages[0].Body), &m.Body); err != nil {
+		return nil, err
 	}
 
-	return &m, *output.Messages[0].ReceiptHandle, nil
+	m.ReceiptHandle = *output.Messages[0].ReceiptHandle
+
+	return &m, nil
 }
 
-// Delete a message by receipt ID.
-func (q *Queue) Delete(ctx context.Context, receiptID string) error {
+// Delete a Message.
+// Does nothing if the passed Message is nil.
+func (q *Queue) Delete(ctx context.Context, m *Message) error {
 	if err := q.ensureQueueURL(ctx); err != nil {
 		return err
 	}
 
+	if m == nil {
+		return nil
+	}
+
 	_, err := q.Client.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 		QueueUrl:      q.url,
-		ReceiptHandle: &receiptID,
+		ReceiptHandle: &m.ReceiptHandle,
 	})
 
 	return err
