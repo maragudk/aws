@@ -20,6 +20,10 @@ type NewBucketOptions struct {
 }
 
 func NewBucket(opts NewBucketOptions) *Bucket {
+	if opts.Name == "" {
+		panic("bucket name must not be empty")
+	}
+
 	client := s3.NewFromConfig(opts.Config, func(o *s3.Options) {
 		o.UsePathStyle = opts.PathStyle
 	})
