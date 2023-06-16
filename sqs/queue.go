@@ -3,6 +3,7 @@ package sqs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -113,6 +114,31 @@ func (q *Queue) Delete(ctx context.Context, m *Message) error {
 	_, err := q.Client.DeleteMessage(ctx, &sqs.DeleteMessageInput{
 		QueueUrl:      q.url,
 		ReceiptHandle: &m.ReceiptHandle,
+	})
+
+	return err
+}
+
+// SetTimeout sets the visibility timeout for the Message, overwriting any existing timeout.
+// The timeout is set from now.
+// Does nothing if the Message is nil.
+func (q *Queue) SetTimeout(ctx context.Context, m *Message, timeout time.Duration) error {
+	if err := q.ensureQueueURL(ctx); err != nil {
+		return err
+	}
+
+	if m == nil {
+		return nil
+	}
+
+	if timeout < 0 || timeout > 12*time.Hour {
+		return errors.New("timeout must be between 0 and 12 hours, both inclusive")
+	}
+
+	_, err := q.Client.ChangeMessageVisibility(ctx, &sqs.ChangeMessageVisibilityInput{
+		QueueUrl:          q.url,
+		ReceiptHandle:     &m.ReceiptHandle,
+		VisibilityTimeout: int32(timeout.Seconds()),
 	})
 
 	return err
