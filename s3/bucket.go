@@ -35,7 +35,7 @@ func NewBucket(opts NewBucketOptions) *Bucket {
 }
 
 // Put an object under key with the given contentType.
-func (b *Bucket) Put(ctx context.Context, key, contentType string, body io.Reader) error {
+func (b *Bucket) Put(ctx context.Context, key, contentType string, body io.ReadSeeker) error {
 	_, err := b.Client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      &b.name,
 		Key:         &key,
